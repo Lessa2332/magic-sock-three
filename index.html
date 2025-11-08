@@ -99,10 +99,8 @@
 </div>
 
 <script type="module">
-  // === Завантажуємо Three.js через CDN (без loadScript) ===
+  // === ВИПРАВЛЕНО: URL без пробілів ===
   import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.167.0/build/three.module.js';
-
-  // === Завантажуємо MediaPipe Pose через tasks-vision ===
   import { PoseLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest";
 
   // === Налаштування ===
@@ -269,12 +267,14 @@
 
   // === MediaPipe ===
   async function initPose() {
+    // === ВИПРАВЛЕНО: URL без пробілів ===
     const filesetResolver = await FilesetResolver.forVisionTasks(
       "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
     );
     poseLandmarker = await PoseLandmarker.createFromOptions(filesetResolver, {
       baseOptions: {
-        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.float16.tflite"
+        // === ВИПРАВЛЕНО: новий URL моделі ===
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker/float16/1/pose_landmarker.tflite"
       },
       runningMode: "VIDEO",
       numPoses: 1
@@ -363,3 +363,4 @@
 </script>
 </body>
 </html>
+
