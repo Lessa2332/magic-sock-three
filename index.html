@@ -1,94 +1,93 @@
 <!doctype html>
 <html lang="uk">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover" />
-<title>Magic Christmas Sock — AR Примірка</title>
-<style>
-  :root{
-    --bg:#fbf7f2;
-    --panel:#fffaf4;
-    --accent:#e7d6c4;
-  }
-  html,body{height:100%;margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
-  #app{
-    position:relative;
-    width:100%;
-    height:100vh;
-    overflow:hidden;
-  }
-  video#camera {
-    position: absolute;
-    top:0; left:0;
-    width:100%; height:100%;
-    object-fit:cover;
-    transform: scaleX(-1);
-    display:none;
-    z-index: 0;
-  }
-  canvas#overlay-canvas{
-    position:absolute;
-    top:0; left:0;
-    width:100%; height:100%;
-    display:block;
-    transform: scaleX(-1);
-    z-index: 1;
-    pointer-events: none;
-  }
-  canvas#snow-canvas{
-    position:absolute;
-    top:0; left:0;
-    width:100%; height:100%;
-    pointer-events:none;
-    z-index:2;
-    mix-blend-mode:screen;
-  }
-  .ui{
-    position: absolute;
-    z-index: 10;
-    bottom: 18px;
-    left: 50%;
-    transform: translateX(-50%);
-    display:flex;
-    gap:12px;
-    align-items:center;
-  }
-  .btn{
-    background:var(--panel);
-    border:1px solid var(--accent);
-    padding:10px 14px;
-    border-radius:12px;
-    font-size:15px;
-    cursor:pointer;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-  }
-  .btn:active{transform:translateY(1px);}
-  .top-left{
-    position:absolute;
-    top:14px; left:14px; z-index:10;
-    background:rgba(255,255,255,0.8);
-    padding:8px 10px;
-    border-radius:10px;
-    border:1px solid var(--accent);
-    font-size:14px;
-  }
-  .hint{
-    position:absolute;
-    top:14px; right:14px; z-index:10;
-    background:rgba(255,250,245,0.9);
-    padding:6px 10px;border-radius:10px;border:1px solid var(--accent);
-    font-size:13px;
-  }
-  @media (max-width:600px){
-    .btn{font-size:14px;padding:10px;}
-    .top-left,.hint{font-size:12px}
-  }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover" />
+  <title>Magic Christmas Sock — AR Примірка</title>
+  <style>
+    :root{
+      --bg:#fbf7f2;
+      --panel:#fffaf4;
+      --accent:#e7d6c4;
+    }
+    html,body{height:100%;margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    #app{
+      position:relative;
+      width:100%;
+      height:100vh;
+      overflow:hidden;
+    }
+    video#camera {
+      position: absolute;
+      top:0; left:0;
+      width:100%; height:100%;
+      object-fit:cover;
+      transform: scaleX(-1);
+      display:none;
+      z-index: 0;
+    }
+    canvas#three-canvas{
+      position:absolute;
+      top:0; left:0;
+      width:100%; height:100%;
+      display:block;
+      transform: scaleX(-1);
+      z-index: 1;
+    }
+    canvas#snow-canvas{
+      position:absolute;
+      top:0; left:0;
+      width:100%; height:100%;
+      pointer-events:none;
+      z-index:2;
+      mix-blend-mode:screen;
+    }
+    .ui{
+      position: absolute;
+      z-index: 10;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .btn{
+      background:var(--panel);
+      border:1px solid var(--accent);
+      padding:10px 14px;
+      border-radius:12px;
+      font-size:15px;
+      cursor:pointer;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+    .btn:active{transform:translateY(1px);}
+    .top-left{
+      position:absolute;
+      top:14px; left:14px; z-index:10;
+      background:rgba(255,255,255,0.8);
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid var(--accent);
+      font-size:14px;
+    }
+    .hint{
+      position:absolute;
+      top:14px; right:14px; z-index:10;
+      background:rgba(255,250,245,0.9);
+      padding:6px 10px;border-radius:10px;border:1px solid var(--accent);
+      font-size:13px;
+    }
+    @media (max-width:600px){
+      .btn{font-size:14px;padding:10px;}
+      .top-left,.hint{font-size:12px}
+    }
+  </style>
 </head>
 <body>
 <div id="app">
   <video id="camera" playsinline muted></video>
-  <canvas id="overlay-canvas"></canvas>
+  <canvas id="three-canvas"></canvas>
   <canvas id="snow-canvas"></canvas>
   <div class="top-left">Magic Sock AR — Примірка на ногу 👣</div>
   <div class="hint">Дозволь камеру → покажи стопу → натисни 📸 для фото</div>
@@ -100,118 +99,90 @@
 </div>
 
 <script type="module">
-  // === Завантажуємо лише через модульний імпорт (без loadScript) ===
+  // === Завантажуємо Three.js через CDN (без loadScript) ===
+  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.167.0/build/three.module.js';
+
+  // === Завантажуємо MediaPipe Pose через tasks-vision ===
   import { PoseLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest";
 
   // === Налаштування ===
-  const SOCK_PNGS = ['sock1.png', 'sock2.png', 'sock3.png'];
+  const SOCK_TEXTURES = ['sock1.png', 'sock2.png', 'sock3.png'];
   let currentSockIndex = 0;
-  let currentSockImage = null;
   let poseLandmarker = null;
   let flipped = true;
 
   // === DOM ===
   const video = document.getElementById('camera');
-  const overlayCanvas = document.getElementById('overlay-canvas');
+  const threeCanvas = document.getElementById('three-canvas');
   const snowCanvas = document.getElementById('snow-canvas');
-  const overlayCtx = overlayCanvas.getContext('2d');
   const snowCtx = snowCanvas.getContext('2d');
 
-  // === Завантаження зображення шкарпетки ===
-  function loadSockImage(index) {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      currentSockImage = img;
-      redraw();
-    };
-    img.src = SOCK_PNGS[index];
-  }
+  // === Three.js сцена ===
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 10);
+  camera.position.z = 1;
 
-  // === Малювання шкарпетки ===
-  function drawSock(x, y, angle, scale) {
-    if (!currentSockImage) return;
-    overlayCtx.save();
-    overlayCtx.translate(x, y);
-    overlayCtx.rotate(angle);
-    const w = overlayCanvas.width * scale;
-    const h = (currentSockImage.height / currentSockImage.width) * w;
-    overlayCtx.drawImage(currentSockImage, -w / 2, -h / 2, w, h);
-    overlayCtx.restore();
-  }
+  const renderer = new THREE.WebGLRenderer({
+    canvas: threeCanvas,
+    alpha: true,
+    antialias: true
+  });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(window.devicePixelRatio || 1);
+  renderer.setClearColor(0x000000, 0);
 
-  function redraw() {
-    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-  }
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.9);
+  scene.add(hemiLight);
 
-  // === Обробка результатів MediaPipe ===
-  function onResults(results) {
-    redraw();
-    if (results.poseLandmarks?.length > 0) {
-      const L = results.poseLandmarks[0];
-      const leftAnkle = L[27];
-      const rightAnkle = L[28];
-      const leftToe = L[31];
-      const rightToe = L[32];
+  // === Модель шкарпетки ===
+  const sockMaterial = new THREE.MeshBasicMaterial({
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthTest: true
+  });
 
-      let ankle, toePt;
-      if (rightAnkle && leftAnkle) {
-        ankle = rightAnkle.y > leftAnkle.y ? rightAnkle : leftAnkle;
-        toePt = rightAnkle.y > leftAnkle.y ? rightToe : leftToe;
-      } else {
-        ankle = rightAnkle || leftAnkle;
-        toePt = rightToe || leftToe;
-      }
+  const leg = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.095, 0.11, 0.32, 16),
+    sockMaterial
+  );
+  leg.position.y = 0.18;
 
-      if (ankle && toePt && ankle.visibility > 0.4 && toePt.visibility > 0.4) {
-        const ax = ankle.x * overlayCanvas.width;
-        const ay = ankle.y * overlayCanvas.height;
-        const tx = toePt.x * overlayCanvas.width;
-        const ty = toePt.y * overlayCanvas.height;
+  const toe = new THREE.Mesh(
+    new THREE.SphereGeometry(0.1, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+    sockMaterial
+  );
+  toe.position.y = -0.02;
+  toe.rotation.x = Math.PI;
 
-        const angle = Math.atan2(ty - ay, tx - ax);
-        const dist = Math.hypot(tx - ax, ty - ay);
-        const scale = Math.min(0.8, Math.max(0.2, dist / overlayCanvas.width * 3));
+  const sockGroup = new THREE.Group();
+  sockGroup.add(leg, toe);
+  sockGroup.scale.x = -1;
+  sockGroup.visible = false;
+  scene.add(sockGroup);
 
-        drawSock(ax, ay, angle, scale);
-      }
-    }
-  }
-
-  // === Камера ===
-  async function startCamera() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }
-      });
-      video.srcObject = stream;
-      video.style.display = 'block';
-      await video.play();
-      resize();
-    } catch (e) {
-      console.error('Камера недоступна:', e);
-      alert('Дозволь доступ до камери для роботи додатку.');
-    }
-  }
-
-  // === MediaPipe ===
-  async function initPose() {
-    const filesetResolver = await FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
-    );
-    poseLandmarker = await PoseLandmarker.createFromOptions(filesetResolver, {
-      baseOptions: {
-        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.float16.tflite"
+  const textureLoader = new THREE.TextureLoader();
+  function loadSockTexture(index) {
+    textureLoader.load(
+      SOCK_TEXTURES[index],
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        sockMaterial.map = texture;
+        sockMaterial.needsUpdate = true;
       },
-      runningMode: "VIDEO",
-      numPoses: 1
-    });
+      undefined,
+      (err) => {
+        console.warn('Не вдалося завантажити текстуру:', err);
+        sockMaterial.map = null;
+        sockMaterial.color.setHex(0xff6b6b);
+        sockMaterial.needsUpdate = true;
+      }
+    );
   }
 
-  // === Анімація снігу ===
+  // === Сніг ===
   let snowParticles = [];
   function initSnow() {
-    const count = Math.round((overlayCanvas.width / 100) * 6);
+    const count = Math.round((snowCanvas.width / 100) * 6);
     snowParticles = [];
     for (let i = 0; i < count; i++) {
       snowParticles.push({
@@ -241,19 +212,88 @@
     requestAnimationFrame(animateSnow);
   }
 
-  // === Захоплення фото ===
+  // === Поза → оновлення шкарпетки ===
+  function updateSockFromPose(landmarks) {
+    if (!landmarks) {
+      sockGroup.visible = false;
+      return;
+    }
+
+    const L = landmarks;
+    const leftAnkle = L[27];
+    const rightAnkle = L[28];
+    const leftToe = L[31];
+    const rightToe = L[32];
+
+    let ankle, toePt;
+    if (rightAnkle && leftAnkle) {
+      ankle = rightAnkle.y > leftAnkle.y ? rightAnkle : leftAnkle;
+      toePt = rightAnkle.y > leftAnkle.y ? rightToe : leftToe;
+    } else {
+      ankle = rightAnkle || leftAnkle;
+      toePt = rightToe || leftToe;
+    }
+
+    if (ankle && toePt && ankle.visibility > 0.4 && toePt.visibility > 0.4) {
+      const ax = (ankle.x - 0.5) * 2;
+      const ay = -(ankle.y - 0.5) * 2;
+      const tx = (toePt.x - 0.5) * 2;
+      const ty = -(toePt.y - 0.5) * 2;
+
+      sockGroup.position.x = ax * (window.innerWidth / window.innerHeight) * 0.9;
+      sockGroup.position.y = ay * 0.95;
+
+      const angle = Math.atan2(ty - ay, tx - ax);
+      sockGroup.rotation.z = -angle;
+
+      const dist = Math.hypot(tx - ax, ty - ay);
+      const scale = THREE.MathUtils.clamp(0.6 + dist * 1.2, 0.6, 1.6);
+      sockGroup.scale.set(scale, scale, 1);
+
+      sockGroup.visible = true;
+    } else {
+      sockGroup.visible = false;
+    }
+  }
+
+  // === Камера ===
+  async function startCamera() {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" }
+    });
+    video.srcObject = stream;
+    video.style.display = 'block';
+    await video.play();
+    resize();
+  }
+
+  // === MediaPipe ===
+  async function initPose() {
+    const filesetResolver = await FilesetResolver.forVisionTasks(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+    );
+    poseLandmarker = await PoseLandmarker.createFromOptions(filesetResolver, {
+      baseOptions: {
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.float16.tflite"
+      },
+      runningMode: "VIDEO",
+      numPoses: 1
+    });
+  }
+
+  // === Експорт фото ===
   document.getElementById('saveBtn').addEventListener('click', () => {
     const finalCanvas = document.createElement('canvas');
-    finalCanvas.width = overlayCanvas.width;
-    finalCanvas.height = overlayCanvas.height;
-    const fctx = finalCanvas.getContext('2d');
+    finalCanvas.width = threeCanvas.width;
+    finalCanvas.height = threeCanvas.height;
+    const ctx = finalCanvas.getContext('2d');
 
-    fctx.drawImage(video, 0, 0, finalCanvas.width, finalCanvas.height);
+    ctx.drawImage(video, 0, 0, finalCanvas.width, finalCanvas.height);
     if (flipped) {
-      fctx.translate(finalCanvas.width, 0);
-      fctx.scale(-1, 1);
+      ctx.translate(finalCanvas.width, 0);
+      ctx.scale(-1, 1);
     }
-    fctx.drawImage(overlayCanvas, 0, 0);
+    ctx.drawImage(threeCanvas, 0, 0);
 
     const link = document.createElement('a');
     link.download = 'magic_sock.png';
@@ -263,24 +303,29 @@
 
   // === Кнопки ===
   document.getElementById('changeBtn').addEventListener('click', () => {
-    currentSockIndex = (currentSockIndex + 1) % SOCK_PNGS.length;
-    loadSockImage(currentSockIndex);
+    currentSockIndex = (currentSockIndex + 1) % SOCK_TEXTURES.length;
+    loadSockTexture(currentSockIndex);
   });
 
   document.getElementById('flipBtn').addEventListener('click', () => {
     flipped = !flipped;
     video.style.transform = flipped ? 'scaleX(-1)' : 'scaleX(1)';
-    overlayCanvas.style.transform = flipped ? 'scaleX(-1)' : 'scaleX(1)';
+    threeCanvas.style.transform = flipped ? 'scaleX(-1)' : 'scaleX(1)';
   });
 
   // === Ресайз ===
   function resize() {
-    [overlayCanvas, snowCanvas].forEach(c => {
-      c.width = window.innerWidth;
-      c.height = window.innerHeight;
-      c.style.width = `${window.innerWidth}px`;
-      c.style.height = `${window.innerHeight}px`;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    [threeCanvas, snowCanvas].forEach(c => {
+      c.width = w;
+      c.height = h;
+      c.style.width = `${w}px`;
+      c.style.height = `${h}px`;
     });
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
     initSnow();
   }
   window.addEventListener('resize', resize);
@@ -290,7 +335,14 @@
   function detectLoop() {
     if (poseLandmarker && video.currentTime !== lastVideoTime) {
       lastVideoTime = video.currentTime;
-      poseLandmarker.detectForVideo(video, performance.now()).then(onResults);
+      poseLandmarker.detectForVideo(video, performance.now()).then(results => {
+        if (results.landmarks?.length > 0) {
+          updateSockFromPose(results.landmarks[0]);
+        }
+        renderer.render(scene, camera);
+      });
+    } else {
+      renderer.render(scene, camera);
     }
     requestAnimationFrame(detectLoop);
   }
@@ -298,14 +350,13 @@
   // === Старт ===
   async function main() {
     try {
-      resize();
-      loadSockImage(0);
+      loadSockTexture(0);
       await Promise.all([startCamera(), initPose()]);
       detectLoop();
       animateSnow();
     } catch (e) {
-      console.error('Помилка ініціалізації:', e);
-      alert('Помилка завантаження: ' + e.message);
+      console.error('Помилка:', e);
+      alert('Помилка запуску: ' + e.message);
     }
   }
   main();
